@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Grazydo - To the crazy ones</title>
     <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Permanent+Marker&display=swap" rel="stylesheet">
     <style>
@@ -19,7 +19,6 @@
             --stroke-width: 3px;
         }
 
-        /* 乔布斯主题 */
         [data-theme="jobs"] {
             --bg-color: #E0E0E0;
             --panel-bg: #FFFFFF;
@@ -30,7 +29,6 @@
             --bubble-text: #fff;
         }
 
-        /* 毕加索主题 */
         [data-theme="picasso"] {
             --bg-color: #FFF3E0;
             --panel-bg: #E1F5FE;
@@ -41,7 +39,6 @@
             --bubble-text: #fff;
         }
 
-        /* 爱因斯坦主题 */
         [data-theme="einstein"] {
             --bg-color: #263238;
             --panel-bg: #37474F;
@@ -55,30 +52,33 @@
         /* ====================
            通用布局
            ==================== */
-        body {
+        html, body {
             margin: 0;
-            height: 100vh;
+            padding: 0;
+            min-height: 100vh;
             background-color: var(--bg-color);
             font-family: var(--font-hand);
             color: var(--text-color);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
             transition: background 0.5s;
+            overflow-x: hidden;
+            overflow-y: auto; 
+            -webkit-tap-highlight-color: transparent;
         }
 
         .app-container {
             width: 90%;
             max-width: 1100px;
-            height: 85vh;
+            min-height: 90vh;
+            margin: 0 auto;
             display: flex;
             gap: 40px;
             align-items: center;
+            padding: 20px 0;
+            box-sizing: border-box;
         }
 
         /* ====================
-           左侧：任务列表 + Slogan
+           左侧：任务列表
            ==================== */
         .task-panel {
             flex: 1.2;
@@ -86,7 +86,7 @@
             border: 3px solid var(--text-color);
             border-radius: var(--radius);
             padding: 30px;
-            height: 100%;
+            height: 70vh;
             display: flex;
             flex-direction: column;
             box-shadow: 10px 10px 0 rgba(0,0,0,0.15);
@@ -95,10 +95,7 @@
             position: relative;
         }
 
-        header {
-            margin-bottom: 20px;
-            text-align: left;
-        }
+        header { margin-bottom: 20px; text-align: left; }
 
         header h1 {
             font-family: 'Permanent Marker', cursive;
@@ -107,7 +104,6 @@
             line-height: 1;
         }
 
-        /* 左侧 Slogan */
         .slogan {
             font-family: 'Patrick Hand', cursive;
             font-size: 1.8rem;
@@ -170,14 +166,10 @@
         }
         
         li:hover { transform: translateX(5px); }
-
-        li.completed {
-            text-decoration: line-through;
-            opacity: 0.5;
-        }
+        li.completed { text-decoration: line-through; opacity: 0.5; }
 
         /* ====================
-           右侧：插画伙伴 + 气泡 + 名言
+           右侧：插画伙伴 (关键调整区)
            ==================== */
         .companion-panel {
             flex: 1;
@@ -185,6 +177,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
             position: relative;
         }
 
@@ -192,6 +185,7 @@
             display: flex;
             gap: 15px;
             margin-top: 20px;
+            margin-bottom: 10px; /* 减少按钮和下方的距离 */
             z-index: 10;
         }
 
@@ -207,12 +201,11 @@
             padding: 5px;
         }
 
-        .avatar-btn:hover, .avatar-btn.active {
-            transform: scale(1.2);
+        .avatar-btn.active {
+            transform: scale(1.1);
             border-color: var(--accent);
             background: var(--accent);
         }
-        
         .avatar-btn svg { width: 100%; height: 100%; }
         .avatar-btn.active svg path, .avatar-btn.active svg circle { stroke: #fff; }
 
@@ -222,18 +215,19 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: center; /* 垂直居中 */
             position: relative;
         }
 
-        /* 头顶气泡 (Top Bubble) - 你的红框部分 */
+        /* 头顶气泡 (电脑端优化) */
         .speech-bubble {
             position: absolute;
-            top: 10px; /* 调整高度，确保在头顶 */
+            /* 核心修改：电脑端气泡下沉，靠近头顶 */
+            top: 50px; 
             background: var(--bubble-color);
             color: var(--bubble-text);
             padding: 15px 30px;
-            border-radius: 50%; /* 椭圆形 */
+            border-radius: 50%;
             font-size: 1.5rem;
             font-weight: bold;
             min-width: 100px;
@@ -246,7 +240,6 @@
             pointer-events: none;
         }
         
-        /* 气泡的小尾巴 */
         .speech-bubble::after {
             content: '';
             position: absolute;
@@ -262,8 +255,10 @@
         
         .speech-bubble.show { opacity: 1; transform: scale(1) translateY(0); }
 
+        /* 插画容器 (电脑端优化) */
         #charContainer {
-            margin-top: 50px; /* 给气泡留出空间 */
+            /* 核心修改：电脑端去掉顶部 margin，把人往上提 */
+            margin-top: 0px; 
             display: flex;
             justify-content: center;
         }
@@ -277,7 +272,6 @@
             cursor: pointer;
         }
 
-        /* 底部名言 (Bottom Quote) */
         .quote-box {
             margin-top: 10px;
             font-size: 1.3rem;
@@ -293,7 +287,7 @@
             transform: rotate(1deg);
         }
 
-        /* SVG 绘制样式 */
+        /* SVG */
         .char-svg path, .char-svg circle, .char-svg rect, .char-svg line, .char-svg polyline {
             stroke: var(--text-color);
             stroke-width: var(--stroke-width);
@@ -308,23 +302,65 @@
         .char-svg .fill-accent { fill: var(--accent); stroke: none; }
         .char-svg .fill-white { fill: #fff; }
 
-        @keyframes breathe {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-        }
-        @keyframes jump {
-            0% { transform: translateY(0) scale(1, 1); }
-            30% { transform: translateY(-40px) scale(0.9, 1.1); }
-            50% { transform: translateY(0) scale(1.1, 0.9); }
-            100% { transform: translateY(0) scale(1, 1); }
-        }
+        @keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
+        @keyframes jump { 0% { transform: translateY(0); } 30% { transform: translateY(-40px); } 100% { transform: translateY(0); } }
         .jump-anim { animation: jump 0.6s ease-out; }
 
+
+        /* ====================
+           📱 移动端专项优化 (Mobile)
+           ==================== */
         @media (max-width: 800px) {
-            .app-container { flex-direction: column-reverse; height: auto; padding: 20px 0;}
-            .char-svg { width: 200px; height: 200px; }
-            header h1 { font-size: 2.5rem; }
-            .slogan { font-size: 1.2rem; }
+            body {
+                align-items: flex-start; 
+                padding-bottom: 50px; 
+            }
+
+            .app-container {
+                flex-direction: column-reverse; 
+                gap: 20px;
+                height: auto; 
+                padding: 20px 5%;
+            }
+
+            .task-panel {
+                width: 100%;
+                height: auto;
+                min-height: 400px;
+                padding: 20px;
+            }
+            
+            header h1 { font-size: 2.5rem; } 
+            .slogan { font-size: 1.2rem; }   
+            
+            input { font-size: 1.2rem; padding: 12px; }
+            button.add-btn { width: 50px; height: 50px; font-size: 1.5rem; padding: 0; }
+
+            .companion-panel {
+                flex: none;
+                margin-bottom: 10px;
+            }
+
+            .avatar-btn { width: 45px; height: 45px; }
+            
+            /* 移动端人物大小 */
+            .char-svg {
+                width: 160px; 
+                height: 190px;
+            }
+            
+            /* 移动端人物位置 */
+            #charContainer { margin-top: 30px; }
+
+            /* 移动端气泡位置 (浮在更上方) */
+            .speech-bubble {
+                top: -10px; /* 移动端保持原样，以免遮挡 */
+                font-size: 1.1rem;
+                padding: 8px 15px;
+                min-width: 60px;
+            }
+            
+            .quote-box { font-size: 1.1rem; margin-top: 0; }
         }
 
     </style>
@@ -332,11 +368,10 @@
 <body>
 
     <div class="app-container">
-        <!-- 左侧：任务列表 -->
+        <!-- 左侧 (手机在下) -->
         <div class="task-panel">
             <header>
                 <h1>Grazydo</h1>
-                <!-- Slogan 保留在左侧 -->
                 <div class="slogan">Here's to the crazy ones.</div>
             </header>
             
@@ -347,7 +382,7 @@
             <ul id="todoList"></ul>
         </div>
 
-        <!-- 右侧：插画伙伴 -->
+        <!-- 右侧 (手机在上) -->
         <div class="companion-panel">
             <div class="char-switcher">
                 <div class="avatar-btn active" onclick="setChar('jobs')" title="Jobs">
@@ -362,14 +397,12 @@
             </div>
 
             <div class="stage">
-                <!-- 这里的气泡就是你红框里要求的那个！ -->
                 <div class="speech-bubble" id="bubble">Think.</div>
                 
                 <div id="charContainer">
-                    <!-- SVG 插画 -->
+                    <!-- SVG -->
                 </div>
 
-                <!-- 底部保留长句名言 -->
                 <div class="quote-box" id="lifeQuote">
                     "Imagination is more important than knowledge."
                 </div>
@@ -378,9 +411,7 @@
     </div>
 
     <script>
-        // ==========================================
-        // SVG 数据
-        // ==========================================
+        // SVG 数据 (保持不变)
         const svgJobs = `
         <svg class="char-svg" viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg">
             <path d="M60 140 C 60 140, 50 220, 50 220 L 150 220 C 150 220, 140 140, 140 140 Z" class="fill-black" />
@@ -425,9 +456,6 @@
             <path d="M90 150 L 110 150 L 100 160 Z" fill="white"/>
         </svg>`;
 
-        // ==========================================
-        // 配置：加入了 bubbleText (头顶气泡)
-        // ==========================================
         const charConfig = {
             jobs: { 
                 svg: svgJobs, 
@@ -469,9 +497,7 @@
                 quoteBox.innerText = charConfig[name].lifeQuote;
                 container.style.opacity = 1;
                 quoteBox.style.opacity = 0.9;
-
-                // 修复点：切换时，立即触发头顶气泡
-                say(charConfig[name].bubbleText); 
+                say(charConfig[name].bubbleText);
             }, 200);
         }
 
@@ -479,11 +505,7 @@
             const bubble = document.getElementById('bubble');
             bubble.innerText = text;
             bubble.classList.add('show');
-            
-            // 2秒后消失
-            setTimeout(() => {
-                bubble.classList.remove('show');
-            }, 2000);
+            setTimeout(() => bubble.classList.remove('show'), 2000);
         }
 
         function addTask() {
@@ -497,7 +519,7 @@
             li.onclick = function() {
                 this.classList.toggle('completed');
                 if (this.classList.contains('completed')) {
-                    say(charConfig[currentChar].react); // 完成任务时的反应
+                    say(charConfig[currentChar].react);
                     const svg = document.querySelector('.char-svg');
                     svg.classList.remove('jump-anim');
                     void svg.offsetWidth; 
@@ -507,16 +529,13 @@
 
             ul.prepend(li);
             input.value = "";
-            
-            // 添加任务时的反应
-            say("Added!"); 
+            say("Added!");
         }
         
         document.getElementById('taskInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') addTask();
         });
 
-        // 初始化
         setChar('jobs');
 
     </script>
