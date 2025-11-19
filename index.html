@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Grazydo - To the crazy ones</title>
+    <title>Grazydo - Cloud Sync</title>
+    <!-- 引入 Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Permanent+Marker&display=swap" rel="stylesheet">
     <style>
         /* ====================
@@ -19,362 +21,158 @@
             --stroke-width: 3px;
         }
 
-        [data-theme="jobs"] {
-            --bg-color: #E0E0E0;
-            --panel-bg: #FFFFFF;
-            --text-color: #111;
-            --accent: #333;
-            --radius: 4px; 
-            --bubble-color: #000;
-            --bubble-text: #fff;
-        }
-
-        [data-theme="picasso"] {
-            --bg-color: #FFF3E0;
-            --panel-bg: #E1F5FE;
-            --text-color: #1A237E;
-            --accent: #FF4081;
-            --radius: 10px 80px 20px 80px / 80px 20px 80px 10px;
-            --bubble-color: #FF4081;
-            --bubble-text: #fff;
-        }
-
-        [data-theme="einstein"] {
-            --bg-color: #263238;
-            --panel-bg: #37474F;
-            --text-color: #ECEFF1;
-            --accent: #FFD740;
-            --radius: 20px;
-            --bubble-color: #FFD740;
-            --bubble-text: #263238;
-        }
+        [data-theme="jobs"] { --bg-color: #E0E0E0; --panel-bg: #FFFFFF; --text-color: #111; --accent: #333; --radius: 4px; --bubble-color: #000; --bubble-text: #fff; }
+        [data-theme="picasso"] { --bg-color: #FFF3E0; --panel-bg: #E1F5FE; --text-color: #1A237E; --accent: #FF4081; --radius: 10px 80px 20px 80px / 80px 20px 80px 10px; --bubble-color: #FF4081; --bubble-text: #fff; }
+        [data-theme="einstein"] { --bg-color: #263238; --panel-bg: #37474F; --text-color: #ECEFF1; --accent: #FFD740; --radius: 20px; --bubble-color: #FFD740; --bubble-text: #263238; }
 
         /* ====================
-           通用布局
+           基础布局 (含移动端优化 v8.0)
            ==================== */
         html, body {
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
+            margin: 0; padding: 0; min-height: 100vh;
             background-color: var(--bg-color);
             font-family: var(--font-hand);
             color: var(--text-color);
             transition: background 0.5s;
-            overflow-x: hidden;
-            overflow-y: auto; 
+            overflow-x: hidden; overflow-y: auto; 
             -webkit-tap-highlight-color: transparent;
         }
 
+        /* 登录时的模糊效果 */
+        body.locked .app-container { filter: blur(8px); pointer-events: none; }
+        body.locked { overflow: hidden; }
+
         .app-container {
-            width: 90%;
-            max-width: 1100px;
-            min-height: 90vh;
-            margin: 0 auto;
-            display: flex;
-            gap: 40px;
-            align-items: center;
-            padding: 20px 0;
-            box-sizing: border-box;
+            width: 90%; max-width: 1100px; min-height: 90vh;
+            margin: 0 auto; display: flex; gap: 40px; align-items: center;
+            padding: 20px 0; box-sizing: border-box;
+            transition: filter 0.3s;
         }
 
-        /* ====================
-           左侧：任务列表
-           ==================== */
+        /* 左侧面板 */
         .task-panel {
-            flex: 1.2;
-            background: var(--panel-bg);
-            border: 3px solid var(--text-color);
-            border-radius: var(--radius);
-            padding: 30px;
-            height: 70vh;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 10px 10px 0 rgba(0,0,0,0.15);
-            transition: all 0.3s;
-            box-sizing: border-box;
-            position: relative;
+            flex: 1.2; background: var(--panel-bg);
+            border: 3px solid var(--text-color); border-radius: var(--radius);
+            padding: 30px; height: 70vh; display: flex; flex-direction: column;
+            box-shadow: 10px 10px 0 rgba(0,0,0,0.15); transition: all 0.3s;
+            box-sizing: border-box; position: relative;
         }
 
         header { margin-bottom: 20px; text-align: left; }
+        header h1 { font-family: 'Permanent Marker', cursive; font-size: 3.5rem; margin: 0; line-height: 1; }
+        .slogan { font-family: 'Patrick Hand', cursive; font-size: 1.8rem; color: var(--accent); opacity: 0.7; margin-top: 5px; margin-left: 5px; transform: rotate(-2deg); display: inline-block; border-bottom: 2px dashed var(--text-color); }
 
-        header h1 {
-            font-family: 'Permanent Marker', cursive;
-            font-size: 3.5rem;
-            margin: 0;
-            line-height: 1;
-        }
-
-        .slogan {
-            font-family: 'Patrick Hand', cursive;
-            font-size: 1.8rem;
-            color: var(--accent);
-            opacity: 0.7;
-            margin-top: 5px;
-            margin-left: 5px;
-            transform: rotate(-2deg);
-            display: inline-block;
-            border-bottom: 2px dashed var(--text-color);
-        }
-
-        .input-group {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        input {
-            flex: 1;
-            padding: 15px;
-            font-size: 1.5rem;
-            font-family: var(--font-hand);
-            border: 2px solid var(--text-color);
-            border-radius: var(--radius);
-            background: transparent;
-            color: var(--text-color);
-            outline: none;
-        }
-
-        button.add-btn {
-            background: var(--accent);
-            color: var(--panel-bg);
-            border: 2px solid var(--text-color);
-            padding: 0 25px;
-            font-size: 2rem;
-            border-radius: 50%;
-            cursor: pointer;
-            transition: transform 0.2s;
-            font-family: var(--font-hand);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
+        .input-group { display: flex; gap: 10px; margin-bottom: 20px; }
+        input { flex: 1; padding: 15px; font-size: 1.5rem; font-family: var(--font-hand); border: 2px solid var(--text-color); border-radius: var(--radius); background: transparent; color: var(--text-color); outline: none; }
+        button.add-btn { background: var(--accent); color: var(--panel-bg); border: 2px solid var(--text-color); padding: 0 25px; font-size: 2rem; border-radius: 50%; cursor: pointer; transition: transform 0.2s; font-family: var(--font-hand); display: flex; align-items: center; justify-content: center; }
         button.add-btn:hover { transform: scale(1.1) rotate(10deg); }
 
         ul { list-style: none; padding: 0; flex: 1; overflow-y: auto; }
-        
-        li {
-            background: rgba(255,255,255,0.1);
-            margin-bottom: 12px;
-            padding: 15px;
-            border-bottom: 2px dashed var(--text-color);
-            display: flex;
-            align-items: center;
-            font-size: 1.4rem;
-            cursor: pointer;
-            animation: slideIn 0.3s ease-out;
-        }
-        
+        li { background: rgba(255,255,255,0.1); margin-bottom: 12px; padding: 15px; border-bottom: 2px dashed var(--text-color); display: flex; align-items: center; justify-content: space-between; font-size: 1.4rem; cursor: pointer; animation: slideIn 0.3s ease-out; position: relative; }
         li:hover { transform: translateX(5px); }
         li.completed { text-decoration: line-through; opacity: 0.5; }
+        
+        .delete-btn { opacity: 0; color: var(--accent); font-weight: bold; font-family: sans-serif; padding: 5px 10px; transition: opacity 0.2s; }
+        li:hover .delete-btn { opacity: 1; }
 
-        /* ====================
-           右侧：插画伙伴 (关键调整区)
-           ==================== */
-        .companion-panel {
-            flex: 1;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-        }
-
-        .char-switcher {
-            display: flex;
-            gap: 15px;
-            margin-top: 20px;
-            margin-bottom: 10px; /* 减少按钮和下方的距离 */
-            z-index: 10;
-        }
-
-        .avatar-btn {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            border: 3px solid var(--text-color);
-            background: #fff;
-            cursor: pointer;
-            transition: transform 0.3s;
-            overflow: hidden;
-            padding: 5px;
-        }
-
-        .avatar-btn.active {
-            transform: scale(1.1);
-            border-color: var(--accent);
-            background: var(--accent);
-        }
+        /* 右侧面板 */
+        .companion-panel { flex: 1; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+        .char-switcher { display: flex; gap: 15px; margin-top: 20px; margin-bottom: 10px; z-index: 10; }
+        .avatar-btn { width: 60px; height: 60px; border-radius: 50%; border: 3px solid var(--text-color); background: #fff; cursor: pointer; transition: transform 0.3s; overflow: hidden; padding: 5px; }
+        .avatar-btn.active { transform: scale(1.1); border-color: var(--accent); background: var(--accent); }
         .avatar-btn svg { width: 100%; height: 100%; }
         .avatar-btn.active svg path, .avatar-btn.active svg circle { stroke: #fff; }
 
-        .stage {
-            flex: 1;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center; /* 垂直居中 */
-            position: relative;
-        }
-
-        /* 头顶气泡 (电脑端优化) */
-        .speech-bubble {
-            position: absolute;
-            /* 核心修改：电脑端气泡下沉，靠近头顶 */
-            top: 50px; 
-            background: var(--bubble-color);
-            color: var(--bubble-text);
-            padding: 15px 30px;
-            border-radius: 50%;
-            font-size: 1.5rem;
-            font-weight: bold;
-            min-width: 100px;
-            text-align: center;
-            opacity: 0;
-            transform: scale(0) translateY(20px);
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            z-index: 20;
-            box-shadow: 5px 5px 0 rgba(0,0,0,0.2);
-            pointer-events: none;
-        }
+        .stage { flex: 1; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
         
-        .speech-bubble::after {
-            content: '';
-            position: absolute;
-            bottom: -10px;
-            left: 50%;
-            transform: translateX(-50%);
-            border-width: 10px 10px 0;
-            border-style: solid;
-            border-color: var(--bubble-color) transparent;
-            display: block;
-            width: 0;
-        }
-        
+        /* 气泡优化位置 */
+        .speech-bubble { position: absolute; top: 50px; background: var(--bubble-color); color: var(--bubble-text); padding: 15px 30px; border-radius: 50%; font-size: 1.5rem; font-weight: bold; min-width: 100px; text-align: center; opacity: 0; transform: scale(0) translateY(20px); transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 20; box-shadow: 5px 5px 0 rgba(0,0,0,0.2); pointer-events: none; }
+        .speech-bubble::after { content: ''; position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%); border-width: 10px 10px 0; border-style: solid; border-color: var(--bubble-color) transparent; display: block; width: 0; }
         .speech-bubble.show { opacity: 1; transform: scale(1) translateY(0); }
 
-        /* 插画容器 (电脑端优化) */
-        #charContainer {
-            /* 核心修改：电脑端去掉顶部 margin，把人往上提 */
-            margin-top: 0px; 
-            display: flex;
-            justify-content: center;
-        }
+        #charContainer { margin-top: 0px; display: flex; justify-content: center; }
+        .char-svg { width: 300px; height: 350px; transition: all 0.5s ease; filter: drop-shadow(8px 8px 0 rgba(0,0,0,0.1)); animation: breathe 3s ease-in-out infinite; cursor: pointer; }
+        .quote-box { margin-top: 10px; font-size: 1.3rem; font-style: italic; text-align: center; max-width: 90%; min-height: 60px; font-family: var(--font-hand); opacity: 0.8; padding: 15px; background: rgba(255,255,255,0.3); border-radius: 10px; transform: rotate(1deg); }
 
-        .char-svg {
-            width: 300px;
-            height: 350px;
-            transition: all 0.5s ease;
-            filter: drop-shadow(8px 8px 0 rgba(0,0,0,0.1));
-            animation: breathe 3s ease-in-out infinite;
-            cursor: pointer;
-        }
-
-        .quote-box {
-            margin-top: 10px;
-            font-size: 1.3rem;
-            font-style: italic;
-            text-align: center;
-            max-width: 90%;
-            min-height: 60px;
-            font-family: var(--font-hand);
-            opacity: 0.8;
-            padding: 15px;
-            background: rgba(255,255,255,0.3);
-            border-radius: 10px;
-            transform: rotate(1deg);
-        }
-
-        /* SVG */
-        .char-svg path, .char-svg circle, .char-svg rect, .char-svg line, .char-svg polyline {
-            stroke: var(--text-color);
-            stroke-width: var(--stroke-width);
-            stroke-linecap: round;
-            stroke-linejoin: round;
-            fill: none; 
-            transition: stroke 0.5s;
-        }
-        .char-svg .fill-skin { fill: #ffe0bd; }
-        .char-svg .fill-hair { fill: #eee; }
-        .char-svg .fill-black { fill: #333; stroke: none; }
-        .char-svg .fill-accent { fill: var(--accent); stroke: none; }
-        .char-svg .fill-white { fill: #fff; }
-
+        .char-svg path, .char-svg circle, .char-svg rect, .char-svg line, .char-svg polyline { stroke: var(--text-color); stroke-width: var(--stroke-width); stroke-linecap: round; stroke-linejoin: round; fill: none; transition: stroke 0.5s; }
+        .char-svg .fill-skin { fill: #ffe0bd; } .char-svg .fill-hair { fill: #eee; } .char-svg .fill-black { fill: #333; stroke: none; } .char-svg .fill-accent { fill: var(--accent); stroke: none; } .char-svg .fill-white { fill: #fff; }
         @keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
         @keyframes jump { 0% { transform: translateY(0); } 30% { transform: translateY(-40px); } 100% { transform: translateY(0); } }
         .jump-anim { animation: jump 0.6s ease-out; }
 
-
         /* ====================
-           📱 移动端专项优化 (Mobile)
+           🔐 登录框样式 (New)
            ==================== */
-        @media (max-width: 800px) {
-            body {
-                align-items: flex-start; 
-                padding-bottom: 50px; 
-            }
+        #authModal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; justify-content: center; align-items: center;
+            z-index: 100; visibility: hidden; opacity: 0; transition: opacity 0.3s;
+        }
+        body.locked #authModal { visibility: visible; opacity: 1; }
+        
+        .auth-card {
+            background: #fff; padding: 40px; border: 3px solid #333;
+            border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+            width: 300px; text-align: center; box-shadow: 10px 10px 0 rgba(0,0,0,0.2);
+        }
+        .auth-card h2 { font-family: 'Permanent Marker', cursive; margin-top: 0; font-size: 2rem; }
+        .auth-input {
+            width: 100%; padding: 12px; margin-bottom: 15px;
+            border: 2px solid #333; border-radius: 5px;
+            font-family: 'Patrick Hand', cursive; font-size: 1.3rem;
+            box-sizing: border-box;
+        }
+        .auth-btn {
+            background: #333; color: #fff; border: none; padding: 12px 20px;
+            font-size: 1.3rem; font-family: 'Permanent Marker', cursive;
+            cursor: pointer; width: 100%; border-radius: 5px; margin-bottom: 10px;
+        }
+        .auth-btn:hover { transform: scale(1.05); }
+        .switch-auth { font-size: 1rem; color: #666; margin-top: 10px; }
 
-            .app-container {
-                flex-direction: column-reverse; 
-                gap: 20px;
-                height: auto; 
-                padding: 20px 5%;
-            }
-
-            .task-panel {
-                width: 100%;
-                height: auto;
-                min-height: 400px;
-                padding: 20px;
-            }
-            
-            header h1 { font-size: 2.5rem; } 
-            .slogan { font-size: 1.2rem; }   
-            
-            input { font-size: 1.2rem; padding: 12px; }
-            button.add-btn { width: 50px; height: 50px; font-size: 1.5rem; padding: 0; }
-
-            .companion-panel {
-                flex: none;
-                margin-bottom: 10px;
-            }
-
-            .avatar-btn { width: 45px; height: 45px; }
-            
-            /* 移动端人物大小 */
-            .char-svg {
-                width: 160px; 
-                height: 190px;
-            }
-            
-            /* 移动端人物位置 */
-            #charContainer { margin-top: 30px; }
-
-            /* 移动端气泡位置 (浮在更上方) */
-            .speech-bubble {
-                top: -10px; /* 移动端保持原样，以免遮挡 */
-                font-size: 1.1rem;
-                padding: 8px 15px;
-                min-width: 60px;
-            }
-            
-            .quote-box { font-size: 1.1rem; margin-top: 0; }
+        /* 退出按钮 */
+        #logoutBtn {
+            position: fixed; top: 20px; right: 20px;
+            background: rgba(255,255,255,0.8); border: 2px solid var(--text-color);
+            padding: 8px 16px; cursor: pointer; font-family: var(--font-hand);
+            font-weight: bold; color: var(--text-color); border-radius: 20px;
+            z-index: 50; display: none;
         }
 
+        /* 移动端优化 */
+        @media (max-width: 800px) {
+            body { align-items: flex-start; padding-bottom: 50px; }
+            .app-container { flex-direction: column-reverse; gap: 20px; height: auto; padding: 20px 5%; }
+            .task-panel { width: 100%; height: auto; min-height: 400px; padding: 20px; }
+            header h1 { font-size: 2.5rem; } .slogan { font-size: 1.2rem; } input { font-size: 1.2rem; padding: 12px; } button.add-btn { width: 50px; height: 50px; font-size: 1.5rem; padding: 0; }
+            .companion-panel { flex: none; margin-bottom: 10px; } .avatar-btn { width: 45px; height: 45px; } .char-svg { width: 160px; height: 190px; } #charContainer { margin-top: 30px; }
+            .speech-bubble { top: -10px; font-size: 1.1rem; padding: 8px 15px; min-width: 60px; } .quote-box { font-size: 1.1rem; margin-top: 0; }
+            .delete-btn { opacity: 1; font-size: 1.2rem; padding: 10px; }
+        }
     </style>
 </head>
-<body>
+<body class="locked">
+
+    <!-- 登录弹窗 -->
+    <div id="authModal">
+        <div class="auth-card">
+            <h2>Grazydo Login</h2>
+            <input type="email" id="email" class="auth-input" placeholder="Email">
+            <input type="password" id="password" class="auth-input" placeholder="Password">
+            <button class="auth-btn" onclick="handleAuth()" id="authBtn">Start</button>
+            <div class="switch-auth" id="authMsg">Login or create a new account automatically</div>
+        </div>
+    </div>
+
+    <!-- 退出按钮 -->
+    <button id="logoutBtn" onclick="logout()">Exit</button>
 
     <div class="app-container">
-        <!-- 左侧 (手机在下) -->
         <div class="task-panel">
             <header>
                 <h1>Grazydo</h1>
                 <div class="slogan">Here's to the crazy ones.</div>
             </header>
-            
             <div class="input-group">
                 <input type="text" id="taskInput" placeholder="What needs to be done?">
                 <button class="add-btn" onclick="addTask()">+</button>
@@ -382,143 +180,154 @@
             <ul id="todoList"></ul>
         </div>
 
-        <!-- 右侧 (手机在上) -->
         <div class="companion-panel">
             <div class="char-switcher">
-                <div class="avatar-btn active" onclick="setChar('jobs')" title="Jobs">
-                    <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" stroke="#000" fill="none" stroke-width="5"/><path d="M30 50 L70 50" stroke="#000" stroke-width="5"/><circle cx="35" cy="45" r="10" fill="#000"/><circle cx="65" cy="45" r="10" fill="#000"/></svg>
-                </div>
-                <div class="avatar-btn" onclick="setChar('picasso')" title="Picasso">
-                    <svg viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="60" stroke="#000" fill="none" stroke-width="5"/><circle cx="40" cy="40" r="5" fill="#000"/><circle cx="70" cy="50" r="8" fill="#000"/></svg>
-                </div>
-                <div class="avatar-btn" onclick="setChar('einstein')" title="Einstein">
-                    <svg viewBox="0 0 100 100"><path d="M20 50 Q50 10 80 50" stroke="#000" fill="none" stroke-width="5"/><circle cx="35" cy="60" r="5" fill="#000"/><circle cx="65" cy="60" r="5" fill="#000"/><path d="M50 70 Q50 85 50 90" stroke="#000" stroke-width="5"/></svg>
-                </div>
+                <div class="avatar-btn active" onclick="setChar('jobs')" title="Jobs"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" stroke="#000" fill="none" stroke-width="5"/><path d="M30 50 L70 50" stroke="#000" stroke-width="5"/><circle cx="35" cy="45" r="10" fill="#000"/><circle cx="65" cy="45" r="10" fill="#000"/></svg></div>
+                <div class="avatar-btn" onclick="setChar('picasso')" title="Picasso"><svg viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="60" stroke="#000" fill="none" stroke-width="5"/><circle cx="40" cy="40" r="5" fill="#000"/><circle cx="70" cy="50" r="8" fill="#000"/></svg></div>
+                <div class="avatar-btn" onclick="setChar('einstein')" title="Einstein"><svg viewBox="0 0 100 100"><path d="M20 50 Q50 10 80 50" stroke="#000" fill="none" stroke-width="5"/><circle cx="35" cy="60" r="5" fill="#000"/><circle cx="65" cy="60" r="5" fill="#000"/><path d="M50 70 Q50 85 50 90" stroke="#000" stroke-width="5"/></svg></div>
             </div>
-
             <div class="stage">
                 <div class="speech-bubble" id="bubble">Think.</div>
-                
-                <div id="charContainer">
-                    <!-- SVG -->
-                </div>
-
-                <div class="quote-box" id="lifeQuote">
-                    "Imagination is more important than knowledge."
-                </div>
+                <div id="charContainer"></div>
+                <div class="quote-box" id="lifeQuote">"Imagination is more important than knowledge."</div>
             </div>
         </div>
     </div>
 
     <script>
-        // SVG 数据 (保持不变)
-        const svgJobs = `
-        <svg class="char-svg" viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg">
-            <path d="M60 140 C 60 140, 50 220, 50 220 L 150 220 C 150 220, 140 140, 140 140 Z" class="fill-black" />
-            <circle cx="100" cy="90" r="45" class="fill-skin" stroke="currentColor" stroke-width="3"/>
-            <g stroke="currentColor" stroke-width="3" fill="white">
-                <circle cx="85" cy="85" r="12" />
-                <circle cx="115" cy="85" r="12" />
-                <line x1="97" y1="85" x2="103" y2="85" />
-            </g>
-            <circle cx="85" cy="85" r="3" fill="black" stroke="none"/>
-            <circle cx="115" cy="85" r="3" fill="black" stroke="none"/>
-            <path d="M56 80 A 45 45 0 0 1 144 80" fill="none" stroke="currentColor" stroke-width="3" stroke-dasharray="5,5"/>
-            <path d="M80 115 Q 100 125 120 115" fill="none" stroke="currentColor" stroke-width="2" stroke-opacity="0.5"/>
-            <circle cx="130" cy="160" r="15" fill="#eee" stroke="currentColor" stroke-width="2"/>
-            <path d="M130 145 L 135 140" stroke="currentColor" stroke-width="2"/>
-        </svg>`;
+        // =================================================================
+        // ✅ 你的 SUPABASE 配置 (已填好)
+        // =================================================================
+        const SUPABASE_URL = 'https://jkqpxgwxtnzidntrokgt.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImprcXB4Z3d4dG56aWRudHJva2d0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MzUxNzcsImV4cCI6MjA3OTExMTE3N30.OV8qzjCcqoykBfDUZxhNEKw6228G0X0KctSfLfZptnY';
+        // =================================================================
 
-        const svgPicasso = `
-        <svg class="char-svg" viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg">
-            <rect x="60" y="130" width="80" height="90" rx="20" class="fill-white" stroke="currentColor" stroke-width="3"/>
-            <path d="M65 150 L 135 150 M 65 170 L 135 170 M 65 190 L 135 190" stroke="currentColor" stroke-width="3"/>
-            <path d="M60 50 L 140 40 L 135 120 L 65 125 Z" class="fill-skin" stroke="currentColor" stroke-width="3"/>
-            <circle cx="90" cy="75" r="8" fill="white" stroke="currentColor" stroke-width="2"/>
-            <circle cx="90" cy="75" r="3" fill="black" stroke="none"/>
-            <circle cx="120" cy="70" r="12" fill="white" stroke="currentColor" stroke-width="2"/>
-            <circle cx="120" cy="70" r="4" fill="black" stroke="none"/>
-            <path d="M100 75 L 90 95 L 105 95" fill="none" stroke="currentColor" stroke-width="3"/>
-            <path d="M95 110 Q 110 105 120 112" fill="none" stroke="currentColor" stroke-width="3"/>
-            <path d="M150 130 L 170 110" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
-            <circle cx="175" cy="105" r="5" fill="currentColor" stroke="none"/>
-        </svg>`;
+        const { createClient } = supabase;
+        const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+        let currentUser = null;
 
-        const svgEinstein = `
-        <svg class="char-svg" viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg">
-            <path d="M50 100 Q 30 80 40 60 Q 40 30 80 20 Q 120 10 160 30 Q 180 60 170 90 Q 180 110 150 120" class="fill-hair" stroke="currentColor" stroke-width="3" fill="white"/>
-            <circle cx="100" cy="100" r="40" class="fill-skin" stroke="currentColor" stroke-width="3"/>
-            <circle cx="85" cy="90" r="4" fill="black"/>
-            <circle cx="115" cy="90" r="4" fill="black"/>
-            <path d="M70 110 Q 100 130 130 110" fill="white" stroke="currentColor" stroke-width="10" stroke-linecap="round"/>
-            <path d="M95 120 Q 100 145 105 120" fill="#FF6B6B" stroke="currentColor" stroke-width="2"/>
-            <path d="M60 140 L 140 140 L 150 220 L 50 220 Z" fill="#37474F" stroke="currentColor" stroke-width="3"/>
-            <path d="M90 150 L 110 150 L 100 160 Z" fill="white"/>
-        </svg>`;
-
+        // --- SVG Assets ---
+        const svgJobs = `<svg class="char-svg" viewBox="0 0 200 220"><path d="M60 140 C 60 140, 50 220, 50 220 L 150 220 C 150 220, 140 140, 140 140 Z" class="fill-black" /><circle cx="100" cy="90" r="45" class="fill-skin" stroke="currentColor" stroke-width="3"/><g stroke="currentColor" stroke-width="3" fill="white"><circle cx="85" cy="85" r="12" /><circle cx="115" cy="85" r="12" /><line x1="97" y1="85" x2="103" y2="85" /></g><circle cx="85" cy="85" r="3" fill="black" stroke="none"/><circle cx="115" cy="85" r="3" fill="black" stroke="none"/><path d="M56 80 A 45 45 0 0 1 144 80" fill="none" stroke="currentColor" stroke-width="3" stroke-dasharray="5,5"/><path d="M80 115 Q 100 125 120 115" fill="none" stroke="currentColor" stroke-width="2" stroke-opacity="0.5"/><circle cx="130" cy="160" r="15" fill="#eee" stroke="currentColor" stroke-width="2"/><path d="M130 145 L 135 140" stroke="currentColor" stroke-width="2"/></svg>`;
+        const svgPicasso = `<svg class="char-svg" viewBox="0 0 200 220"><rect x="60" y="130" width="80" height="90" rx="20" class="fill-white" stroke="currentColor" stroke-width="3"/><path d="M65 150 L 135 150 M 65 170 L 135 170 M 65 190 L 135 190" stroke="currentColor" stroke-width="3"/><path d="M60 50 L 140 40 L 135 120 L 65 125 Z" class="fill-skin" stroke="currentColor" stroke-width="3"/><circle cx="90" cy="75" r="8" fill="white" stroke="currentColor" stroke-width="2"/><circle cx="90" cy="75" r="3" fill="black" stroke="none"/><circle cx="120" cy="70" r="12" fill="white" stroke="currentColor" stroke-width="2"/><circle cx="120" cy="70" r="4" fill="black" stroke="none"/><path d="M100 75 L 90 95 L 105 95" fill="none" stroke="currentColor" stroke-width="3"/><path d="M95 110 Q 110 105 120 112" fill="none" stroke="currentColor" stroke-width="3"/><path d="M150 130 L 170 110" stroke="currentColor" stroke-width="6" stroke-linecap="round"/><circle cx="175" cy="105" r="5" fill="currentColor" stroke="none"/></svg>`;
+        const svgEinstein = `<svg class="char-svg" viewBox="0 0 200 220"><path d="M50 100 Q 30 80 40 60 Q 40 30 80 20 Q 120 10 160 30 Q 180 60 170 90 Q 180 110 150 120" class="fill-hair" stroke="currentColor" stroke-width="3" fill="white"/><circle cx="100" cy="100" r="40" class="fill-skin" stroke="currentColor" stroke-width="3"/><circle cx="85" cy="90" r="4" fill="black"/><circle cx="115" cy="90" r="4" fill="black"/><path d="M70 110 Q 100 130 130 110" fill="white" stroke="currentColor" stroke-width="10" stroke-linecap="round"/><path d="M95 120 Q 100 145 105 120" fill="#FF6B6B" stroke="currentColor" stroke-width="2"/><path d="M60 140 L 140 140 L 150 220 L 50 220 Z" fill="#37474F" stroke="currentColor" stroke-width="3"/><path d="M90 150 L 110 150 L 100 160 Z" fill="white"/></svg>`;
+        
         const charConfig = {
-            jobs: { 
-                svg: svgJobs, 
-                bubbleText: "Focus.", 
-                react: "Boom!",
-                lifeQuote: "\"Stay hungry. Stay foolish.\"" 
-            },
-            picasso: { 
-                svg: svgPicasso, 
-                bubbleText: "Create.", 
-                react: "Art!",
-                lifeQuote: "\"Everything you can imagine is real.\"" 
-            },
-            einstein: { 
-                svg: svgEinstein, 
-                bubbleText: "Think.", 
-                react: "Eureka!",
-                lifeQuote: "\"Imagination is more important than knowledge.\"" 
-            }
+            jobs: { svg: svgJobs, bubbleText: "Focus.", react: "Boom!", lifeQuote: "\"Stay hungry. Stay foolish.\"" },
+            picasso: { svg: svgPicasso, bubbleText: "Create.", react: "Art!", lifeQuote: "\"Everything you can imagine is real.\"" },
+            einstein: { svg: svgEinstein, bubbleText: "Think.", react: "Eureka!", lifeQuote: "\"Imagination is more important than knowledge.\"" }
         };
 
         let currentChar = 'jobs';
 
-        function setChar(name) {
-            currentChar = name;
-            document.documentElement.setAttribute('data-theme', name);
+        // --- 🚀 Supabase Auth & Data Logic ---
+        
+        // 登录或注册
+        async function handleAuth() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const msg = document.getElementById('authMsg');
+            const btn = document.getElementById('authBtn');
+
+            if(!email || !password) { msg.innerText = "Please enter email & password"; return; }
+
+            msg.innerText = "Processing...";
+            btn.disabled = true;
             
-            document.querySelectorAll('.avatar-btn').forEach(b => b.classList.remove('active'));
-            event.currentTarget.classList.add('active');
-            
-            const container = document.getElementById('charContainer');
-            const quoteBox = document.getElementById('lifeQuote');
-            
-            container.style.opacity = 0;
-            quoteBox.style.opacity = 0;
-            
-            setTimeout(() => {
-                container.innerHTML = charConfig[name].svg;
-                quoteBox.innerText = charConfig[name].lifeQuote;
-                container.style.opacity = 1;
-                quoteBox.style.opacity = 0.9;
-                say(charConfig[name].bubbleText);
-            }, 200);
+            // 1. 尝试登录
+            const { data, error } = await sb.auth.signInWithPassword({ email, password });
+
+            if (error) {
+                // 2. 登录失败则尝试注册
+                msg.innerText = "Creating new account...";
+                const { data: upData, error: upError } = await sb.auth.signUp({ email, password });
+                
+                if (upError) {
+                    msg.innerText = "Error: " + upError.message;
+                    btn.disabled = false;
+                } else {
+                    msg.innerText = "Account created! Logging in...";
+                    // 自动登录
+                }
+            } else {
+                msg.innerText = "Welcome back!";
+            }
         }
 
-        function say(text) {
-            const bubble = document.getElementById('bubble');
-            bubble.innerText = text;
-            bubble.classList.add('show');
-            setTimeout(() => bubble.classList.remove('show'), 2000);
+        // 监听登录状态
+        sb.auth.onAuthStateChange((event, session) => {
+            if (session) {
+                currentUser = session.user;
+                document.body.classList.remove('locked');
+                document.getElementById('logoutBtn').style.display = 'block';
+                loadTasks();
+            } else {
+                currentUser = null;
+                document.body.classList.add('locked');
+                document.getElementById('logoutBtn').style.display = 'none';
+                document.getElementById('todoList').innerHTML = '';
+                document.getElementById('authBtn').disabled = false;
+                document.getElementById('authMsg').innerText = "Login or create a new account automatically";
+            }
+        });
+
+        // 退出
+        async function logout() {
+            await sb.auth.signOut();
         }
 
-        function addTask() {
+        // 加载任务
+        async function loadTasks() {
+            const { data, error } = await sb.from('tasks').select('*').order('created_at', { ascending: true });
+            if (data) {
+                document.getElementById('todoList').innerHTML = '';
+                data.forEach(t => renderTask(t));
+            }
+        }
+
+        // 添加任务
+        async function addTask() {
             const input = document.getElementById('taskInput');
-            if (!input.value.trim()) return;
-            
+            const text = input.value.trim();
+            if (!text || !currentUser) return;
+
+            const { data, error } = await sb.from('tasks').insert([{ content: text, user_id: currentUser.id }]).select();
+            if (data) {
+                renderTask(data[0]);
+                input.value = "";
+                say("Added!");
+            }
+        }
+
+        // 渲染单个任务
+        function renderTask(task) {
             const ul = document.getElementById('todoList');
             const li = document.createElement('li');
-            li.innerText = input.value;
             
-            li.onclick = function() {
+            const span = document.createElement('span');
+            span.innerText = task.content;
+            li.appendChild(span);
+            
+            if (task.is_completed) li.classList.add('completed');
+            
+            // 删除按钮
+            const delBtn = document.createElement('span');
+            delBtn.innerHTML = '✕';
+            delBtn.className = 'delete-btn';
+            delBtn.onclick = async function(e) {
+                e.stopPropagation();
+                li.remove();
+                await sb.from('tasks').delete().eq('id', task.id);
+            };
+            li.appendChild(delBtn);
+
+            // 完成切换
+            li.onclick = async function(e) {
+                if(e.target.className === 'delete-btn') return;
+                const newStatus = !this.classList.contains('completed');
                 this.classList.toggle('completed');
-                if (this.classList.contains('completed')) {
+                await sb.from('tasks').update({ is_completed: newStatus }).eq('id', task.id);
+                
+                if (newStatus) {
                     say(charConfig[currentChar].react);
                     const svg = document.querySelector('.char-svg');
                     svg.classList.remove('jump-anim');
@@ -526,15 +335,33 @@
                     svg.classList.add('jump-anim');
                 }
             };
-
             ul.prepend(li);
-            input.value = "";
-            say("Added!");
+        }
+
+        // --- UI 交互 ---
+        function setChar(name) {
+            currentChar = name;
+            document.documentElement.setAttribute('data-theme', name);
+            document.querySelectorAll('.avatar-btn').forEach(b => b.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            const container = document.getElementById('charContainer');
+            const quoteBox = document.getElementById('lifeQuote');
+            container.style.opacity = 0; quoteBox.style.opacity = 0;
+            setTimeout(() => {
+                container.innerHTML = charConfig[name].svg;
+                quoteBox.innerText = charConfig[name].lifeQuote;
+                container.style.opacity = 1; quoteBox.style.opacity = 0.9;
+                say(charConfig[name].bubbleText);
+            }, 200);
+        }
+
+        function say(text) {
+            const bubble = document.getElementById('bubble');
+            bubble.innerText = text; bubble.classList.add('show');
+            setTimeout(() => bubble.classList.remove('show'), 2000);
         }
         
-        document.getElementById('taskInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') addTask();
-        });
+        document.getElementById('taskInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') addTask(); });
 
         setChar('jobs');
 
