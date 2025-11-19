@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grazydo - 你的天才伙伴</title>
+    <title>Grazydo - To the crazy ones</title>
     <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Permanent+Marker&display=swap" rel="stylesheet">
     <style>
         /* ====================
-           CSS 变量与主题
+           CSS 变量与主题配置
            ==================== */
         :root {
             --bg-color: #f4f4f4;
@@ -25,7 +25,7 @@
             --panel-bg: #FFFFFF;
             --text-color: #111;
             --accent: #333;
-            --radius: 4px; /* 极简 */
+            --radius: 4px; 
             --bubble-color: #000;
             --bubble-text: #fff;
         }
@@ -36,7 +36,7 @@
             --panel-bg: #E1F5FE;
             --text-color: #1A237E;
             --accent: #FF4081;
-            --radius: 10px 80px 20px 80px / 80px 20px 80px 10px; /* 扭曲 */
+            --radius: 10px 80px 20px 80px / 80px 20px 80px 10px;
             --bubble-color: #FF4081;
             --bubble-text: #fff;
         }
@@ -78,7 +78,7 @@
         }
 
         /* ====================
-           左侧：任务列表
+           左侧：任务列表 + Slogan
            ==================== */
         .task-panel {
             flex: 1.2;
@@ -91,14 +91,33 @@
             flex-direction: column;
             box-shadow: 10px 10px 0 rgba(0,0,0,0.15);
             transition: all 0.3s;
-            position: relative;
             box-sizing: border-box;
+            position: relative;
+        }
+
+        header {
+            margin-bottom: 20px;
+            text-align: left;
         }
 
         header h1 {
             font-family: 'Permanent Marker', cursive;
-            font-size: 3rem;
-            margin: 0 0 10px 0;
+            font-size: 3.5rem;
+            margin: 0;
+            line-height: 1;
+        }
+
+        /* 左侧 Slogan */
+        .slogan {
+            font-family: 'Patrick Hand', cursive;
+            font-size: 1.8rem;
+            color: var(--accent);
+            opacity: 0.7;
+            margin-top: 5px;
+            margin-left: 5px;
+            transform: rotate(-2deg);
+            display: inline-block;
+            border-bottom: 2px dashed var(--text-color);
         }
 
         .input-group {
@@ -158,7 +177,7 @@
         }
 
         /* ====================
-           右侧：插画伙伴
+           右侧：插画伙伴 + 气泡 + 名言
            ==================== */
         .companion-panel {
             flex: 1;
@@ -169,7 +188,6 @@
             position: relative;
         }
 
-        /* 角色切换按钮 */
         .char-switcher {
             display: flex;
             gap: 15px;
@@ -198,28 +216,27 @@
         .avatar-btn svg { width: 100%; height: 100%; }
         .avatar-btn.active svg path, .avatar-btn.active svg circle { stroke: #fff; }
 
-        /* 舞台与插画 */
         .stage {
             flex: 1;
             width: 100%;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             position: relative;
         }
 
+        /* 头顶气泡 (Top Bubble) - 你的红框部分 */
         .speech-bubble {
             position: absolute;
-            top: 10%;
-            right: 0;
-            left: 0;
-            margin: auto;
+            top: 10px; /* 调整高度，确保在头顶 */
             background: var(--bubble-color);
             color: var(--bubble-text);
-            padding: 20px;
-            border-radius: 50%;
-            font-size: 1.4rem;
-            max-width: 250px;
+            padding: 15px 30px;
+            border-radius: 50%; /* 椭圆形 */
+            font-size: 1.5rem;
+            font-weight: bold;
+            min-width: 100px;
             text-align: center;
             opacity: 0;
             transform: scale(0) translateY(20px);
@@ -229,12 +246,13 @@
             pointer-events: none;
         }
         
-        /* 气泡小尾巴 */
+        /* 气泡的小尾巴 */
         .speech-bubble::after {
             content: '';
             position: absolute;
             bottom: -10px;
             left: 50%;
+            transform: translateX(-50%);
             border-width: 10px 10px 0;
             border-style: solid;
             border-color: var(--bubble-color) transparent;
@@ -242,57 +260,71 @@
             width: 0;
         }
         
-        .speech-bubble.show {
-            opacity: 1;
-            transform: scale(1) translateY(0);
+        .speech-bubble.show { opacity: 1; transform: scale(1) translateY(0); }
+
+        #charContainer {
+            margin-top: 50px; /* 给气泡留出空间 */
+            display: flex;
+            justify-content: center;
         }
 
-        /* SVG 角色通用样式 */
         .char-svg {
-            width: 350px;
-            height: 400px;
+            width: 300px;
+            height: 350px;
             transition: all 0.5s ease;
             filter: drop-shadow(8px 8px 0 rgba(0,0,0,0.1));
-            /* 默认呼吸动画 */
             animation: breathe 3s ease-in-out infinite;
             cursor: pointer;
         }
 
-        /* SVG 线条风格 */
+        /* 底部名言 (Bottom Quote) */
+        .quote-box {
+            margin-top: 10px;
+            font-size: 1.3rem;
+            font-style: italic;
+            text-align: center;
+            max-width: 90%;
+            min-height: 60px;
+            font-family: var(--font-hand);
+            opacity: 0.8;
+            padding: 15px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 10px;
+            transform: rotate(1deg);
+        }
+
+        /* SVG 绘制样式 */
         .char-svg path, .char-svg circle, .char-svg rect, .char-svg line, .char-svg polyline {
             stroke: var(--text-color);
             stroke-width: var(--stroke-width);
             stroke-linecap: round;
             stroke-linejoin: round;
-            fill: none; /* 默认涂鸦风格：无填充 */
+            fill: none; 
             transition: stroke 0.5s;
         }
-
-        /* 部分填充颜色 */
         .char-svg .fill-skin { fill: #ffe0bd; }
         .char-svg .fill-hair { fill: #eee; }
         .char-svg .fill-black { fill: #333; stroke: none; }
         .char-svg .fill-accent { fill: var(--accent); stroke: none; }
         .char-svg .fill-white { fill: #fff; }
 
-        /* 动画定义 */
         @keyframes breathe {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.02); }
         }
-
         @keyframes jump {
             0% { transform: translateY(0) scale(1, 1); }
             30% { transform: translateY(-40px) scale(0.9, 1.1); }
             50% { transform: translateY(0) scale(1.1, 0.9); }
             100% { transform: translateY(0) scale(1, 1); }
         }
-
         .jump-anim { animation: jump 0.6s ease-out; }
 
         @media (max-width: 800px) {
             .app-container { flex-direction: column-reverse; height: auto; padding: 20px 0;}
             .char-svg { width: 200px; height: 200px; }
+            header h1 { font-size: 2.5rem; }
+            .slogan { font-size: 1.2rem; }
         }
 
     </style>
@@ -300,11 +332,14 @@
 <body>
 
     <div class="app-container">
-        <!-- 左侧 -->
+        <!-- 左侧：任务列表 -->
         <div class="task-panel">
             <header>
                 <h1>Grazydo</h1>
+                <!-- Slogan 保留在左侧 -->
+                <div class="slogan">Here's to the crazy ones.</div>
             </header>
+            
             <div class="input-group">
                 <input type="text" id="taskInput" placeholder="What needs to be done?">
                 <button class="add-btn" onclick="addTask()">+</button>
@@ -312,11 +347,10 @@
             <ul id="todoList"></ul>
         </div>
 
-        <!-- 右侧 -->
+        <!-- 右侧：插画伙伴 -->
         <div class="companion-panel">
             <div class="char-switcher">
                 <div class="avatar-btn active" onclick="setChar('jobs')" title="Jobs">
-                    <!-- 小图标 SVG -->
                     <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" stroke="#000" fill="none" stroke-width="5"/><path d="M30 50 L70 50" stroke="#000" stroke-width="5"/><circle cx="35" cy="45" r="10" fill="#000"/><circle cx="65" cy="45" r="10" fill="#000"/></svg>
                 </div>
                 <div class="avatar-btn" onclick="setChar('picasso')" title="Picasso">
@@ -328,9 +362,16 @@
             </div>
 
             <div class="stage">
-                <div class="speech-bubble" id="bubble">Hello creator!</div>
+                <!-- 这里的气泡就是你红框里要求的那个！ -->
+                <div class="speech-bubble" id="bubble">Think.</div>
+                
                 <div id="charContainer">
-                    <!-- SVG 插画将注入这里 -->
+                    <!-- SVG 插画 -->
+                </div>
+
+                <!-- 底部保留长句名言 -->
+                <div class="quote-box" id="lifeQuote">
+                    "Imagination is more important than knowledge."
                 </div>
             </div>
         </div>
@@ -338,87 +379,74 @@
 
     <script>
         // ==========================================
-        // SVG 插画数据 (The Magic)
+        // SVG 数据
         // ==========================================
-        
-        // 1. 乔布斯：高领衫，圆眼镜，拿着苹果，极简线条
         const svgJobs = `
         <svg class="char-svg" viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg">
-            <!-- 身体 (高领衫) -->
             <path d="M60 140 C 60 140, 50 220, 50 220 L 150 220 C 150 220, 140 140, 140 140 Z" class="fill-black" />
-            <!-- 脑袋 -->
             <circle cx="100" cy="90" r="45" class="fill-skin" stroke="currentColor" stroke-width="3"/>
-            <!-- 眼镜 -->
             <g stroke="currentColor" stroke-width="3" fill="white">
                 <circle cx="85" cy="85" r="12" />
                 <circle cx="115" cy="85" r="12" />
-                <line x1="97" y1="85" x2="103" y2="85" /> <!-- 鼻梁 -->
+                <line x1="97" y1="85" x2="103" y2="85" />
             </g>
-            <!-- 眼睛珠子 -->
             <circle cx="85" cy="85" r="3" fill="black" stroke="none"/>
             <circle cx="115" cy="85" r="3" fill="black" stroke="none"/>
-            <!-- 只有一点头发 -->
             <path d="M56 80 A 45 45 0 0 1 144 80" fill="none" stroke="currentColor" stroke-width="3" stroke-dasharray="5,5"/>
-            <!-- 胡茬 -->
             <path d="M80 115 Q 100 125 120 115" fill="none" stroke="currentColor" stroke-width="2" stroke-opacity="0.5"/>
-            <!-- 手拿苹果 -->
             <circle cx="130" cy="160" r="15" fill="#eee" stroke="currentColor" stroke-width="2"/>
             <path d="M130 145 L 135 140" stroke="currentColor" stroke-width="2"/>
         </svg>`;
 
-        // 2. 毕加索：条纹衫，不对称眼睛，拿着画笔，有点疯狂
         const svgPicasso = `
         <svg class="char-svg" viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg">
-            <!-- 身体 (条纹衫) -->
             <rect x="60" y="130" width="80" height="90" rx="20" class="fill-white" stroke="currentColor" stroke-width="3"/>
-            <!-- 条纹 -->
             <path d="M65 150 L 135 150 M 65 170 L 135 170 M 65 190 L 135 190" stroke="currentColor" stroke-width="3"/>
-            <!-- 脑袋 (稍微方一点，立体主义) -->
             <path d="M60 50 L 140 40 L 135 120 L 65 125 Z" class="fill-skin" stroke="currentColor" stroke-width="3"/>
-            <!-- 眼睛 (大小不一) -->
             <circle cx="90" cy="75" r="8" fill="white" stroke="currentColor" stroke-width="2"/>
             <circle cx="90" cy="75" r="3" fill="black" stroke="none"/>
-            
             <circle cx="120" cy="70" r="12" fill="white" stroke="currentColor" stroke-width="2"/>
             <circle cx="120" cy="70" r="4" fill="black" stroke="none"/>
-            <!-- 鼻子 (侧面) -->
             <path d="M100 75 L 90 95 L 105 95" fill="none" stroke="currentColor" stroke-width="3"/>
-            <!-- 嘴巴 -->
             <path d="M95 110 Q 110 105 120 112" fill="none" stroke="currentColor" stroke-width="3"/>
-            <!-- 画笔 -->
             <path d="M150 130 L 170 110" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
             <circle cx="175" cy="105" r="5" fill="currentColor" stroke="none"/>
         </svg>`;
 
-        // 3. 爱因斯坦：爆炸头，大胡子，吐舌头
         const svgEinstein = `
         <svg class="char-svg" viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg">
-            <!-- 头发 (一团云) -->
-            <path d="M50 100 Q 30 80 40 60 Q 40 30 80 20 Q 120 10 160 30 Q 180 60 170 90 Q 180 110 150 120" 
-                  class="fill-hair" stroke="currentColor" stroke-width="3" fill="white"/>
-            <!-- 脸 -->
+            <path d="M50 100 Q 30 80 40 60 Q 40 30 80 20 Q 120 10 160 30 Q 180 60 170 90 Q 180 110 150 120" class="fill-hair" stroke="currentColor" stroke-width="3" fill="white"/>
             <circle cx="100" cy="100" r="40" class="fill-skin" stroke="currentColor" stroke-width="3"/>
-            <!-- 眼睛 -->
             <circle cx="85" cy="90" r="4" fill="black"/>
             <circle cx="115" cy="90" r="4" fill="black"/>
-            <!-- 大胡子 -->
             <path d="M70 110 Q 100 130 130 110" fill="white" stroke="currentColor" stroke-width="10" stroke-linecap="round"/>
-            <!-- 舌头 (经典表情) -->
             <path d="M95 120 Q 100 145 105 120" fill="#FF6B6B" stroke="currentColor" stroke-width="2"/>
-            <!-- 身体 (西装/实验服) -->
             <path d="M60 140 L 140 140 L 150 220 L 50 220 Z" fill="#37474F" stroke="currentColor" stroke-width="3"/>
-            <!-- 领结 -->
             <path d="M90 150 L 110 150 L 100 160 Z" fill="white"/>
         </svg>`;
 
         // ==========================================
-        // 逻辑控制
+        // 配置：加入了 bubbleText (头顶气泡)
         // ==========================================
-        
         const charConfig = {
-            jobs: { svg: svgJobs, quote: "Stay hungry.", react: "Focus!" },
-            picasso: { svg: svgPicasso, quote: "Create!", react: "Art!" },
-            einstein: { svg: svgEinstein, quote: "Think.", react: "Eureka!" }
+            jobs: { 
+                svg: svgJobs, 
+                bubbleText: "Focus.", 
+                react: "Boom!",
+                lifeQuote: "\"Stay hungry. Stay foolish.\"" 
+            },
+            picasso: { 
+                svg: svgPicasso, 
+                bubbleText: "Create.", 
+                react: "Art!",
+                lifeQuote: "\"Everything you can imagine is real.\"" 
+            },
+            einstein: { 
+                svg: svgEinstein, 
+                bubbleText: "Think.", 
+                react: "Eureka!",
+                lifeQuote: "\"Imagination is more important than knowledge.\"" 
+            }
         };
 
         let currentChar = 'jobs';
@@ -427,17 +455,23 @@
             currentChar = name;
             document.documentElement.setAttribute('data-theme', name);
             
-            // 更新按钮状态
             document.querySelectorAll('.avatar-btn').forEach(b => b.classList.remove('active'));
             event.currentTarget.classList.add('active');
             
-            // 注入 SVG
             const container = document.getElementById('charContainer');
+            const quoteBox = document.getElementById('lifeQuote');
+            
             container.style.opacity = 0;
+            quoteBox.style.opacity = 0;
+            
             setTimeout(() => {
                 container.innerHTML = charConfig[name].svg;
+                quoteBox.innerText = charConfig[name].lifeQuote;
                 container.style.opacity = 1;
-                say(charConfig[name].quote);
+                quoteBox.style.opacity = 0.9;
+
+                // 修复点：切换时，立即触发头顶气泡
+                say(charConfig[name].bubbleText); 
             }, 200);
         }
 
@@ -445,7 +479,11 @@
             const bubble = document.getElementById('bubble');
             bubble.innerText = text;
             bubble.classList.add('show');
-            setTimeout(() => bubble.classList.remove('show'), 2500);
+            
+            // 2秒后消失
+            setTimeout(() => {
+                bubble.classList.remove('show');
+            }, 2000);
         }
 
         function addTask() {
@@ -456,12 +494,10 @@
             const li = document.createElement('li');
             li.innerText = input.value;
             
-            // 点击完成逻辑
             li.onclick = function() {
                 this.classList.toggle('completed');
                 if (this.classList.contains('completed')) {
-                    say("Great job!");
-                    // 触发跳跃动画
+                    say(charConfig[currentChar].react); // 完成任务时的反应
                     const svg = document.querySelector('.char-svg');
                     svg.classList.remove('jump-anim');
                     void svg.offsetWidth; 
@@ -471,10 +507,11 @@
 
             ul.prepend(li);
             input.value = "";
-            say(charConfig[currentChar].react);
+            
+            // 添加任务时的反应
+            say("Added!"); 
         }
         
-        // 绑定回车
         document.getElementById('taskInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') addTask();
         });
